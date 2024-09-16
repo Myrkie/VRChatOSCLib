@@ -23,6 +23,10 @@
 
         /// <summary>True if the path is an avatar parameter of any kind.</summary>
         public readonly bool IsParameter;
+        
+        /// <summary>The avatar current parameter name.</summary>
+        public readonly string AvatarParameter;
+        
         /// <summary>The type of message contained by the address.</summary>
         public readonly MessageType Type;
         /// <summary>Original OscMessage object received.</summary>
@@ -60,11 +64,13 @@
             Address = message.Address;
             Path = Address.Substring(Address.LastIndexOf('/'));
             IsParameter = Address.StartsWith(avatar_parameters_address);
-
+            AvatarParameter = "";
             if (IsParameter)
             {
                 Type = Array.Exists(default_avatar_parameters, p => message.Address.EndsWith(p)) ?
                 MessageType.DefaultParameter : MessageType.AvatarParameter;
+                int parameterStartIndex = avatar_parameters_address.Length;
+                AvatarParameter = Address.Substring(parameterStartIndex + 1);
             }
             else if (Address.StartsWith(avatar_change_address)) Type = MessageType.AvatarChange;
             else Type = MessageType.Unknown;
