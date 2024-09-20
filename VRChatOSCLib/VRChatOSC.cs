@@ -36,6 +36,7 @@ namespace VRChatOSCLib
         /// <summary>EventsHandler invoked on receiving VRChat OSC messages such as avatar parameters.</summary>
         public EventHandler<VRCMessage>? OnMessage;
         private readonly Dictionary<string, Action<VRCMessage>> _callbacks = new Dictionary<string, Action<VRCMessage>>();
+        
         /// <summary>
         /// Adds a method to be invoked when a message from a specific OSC address is received.
         /// </summary>
@@ -98,14 +99,17 @@ namespace VRChatOSCLib
         }
 
         /// <summary>Listen for incoming messages from the VRChat client.</summary>
-        /// <param name="ipAddress">Ip address of device.</param>
+        /// <param name="ipAddress">Ip address of device. Defaults to loopback if not specified.</param>
         /// <param name="localPort">The local port for receiving data on your network.</param>
         /// <param name="bufferLength">UDP buffer length, default is 4096</param>
         public void Listen(IPAddress? ipAddress = null, int localPort = 9001, int bufferLength = 4096)
         {
             if (m_Listening) return;
 
-            LocalEndPoint = ipAddress == null ? new IPEndPoint(IPAddress.Parse("127.0.0.1"), localPort) : new IPEndPoint(ipAddress, localPort);
+            // Use loopback address if no IP address is provided (ipAddress is null).
+            var effectiveIpAddress = ipAddress ?? IPAddress.Loopback;
+
+            LocalEndPoint = new IPEndPoint(effectiveIpAddress, localPort);
 
             m_Server = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp) { ReceiveTimeout = int.MaxValue };
             m_Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
@@ -118,6 +122,8 @@ namespace VRChatOSCLib
 
             m_Listening = true;
         }
+
+
         #endregion
 
 

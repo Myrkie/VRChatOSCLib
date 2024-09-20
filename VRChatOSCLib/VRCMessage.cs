@@ -65,6 +65,7 @@
             Path = Address.Substring(Address.LastIndexOf('/'));
             IsParameter = Address.StartsWith(avatar_parameters_address);
             AvatarParameter = "";
+            
             if (IsParameter)
             {
                 Type = Array.Exists(default_avatar_parameters, p => message.Address.EndsWith(p)) ?

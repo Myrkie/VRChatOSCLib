@@ -57,8 +57,9 @@ internal class Program
 
 
         // Send Chatbox Messages
-        osc.SendChatbox("Hello World"); // Sends the ASCII string to the Keyboard
-        osc.SendChatbox("Hello World", true); // Bypass keyboard and sends string to Chatbox
+        osc.SendChatbox("Hello World 1"); // Sends the string to the Keyboard
+        osc.SendChatbox("Hello World 2", true); // Bypass keyboard and sends string to Chatbox
+        osc.SendChatbox("Hello World 3", true, true); // Sends a string to the Chatbox and plays message SFX on VRC
 
         osc.SendChatbox(true); // Set typing indicator ON
         osc.SendChatbox(false); // Set typing indicator OFF
@@ -72,14 +73,22 @@ internal class Program
 
 
         // Listen for incoming messages
-        osc.Listen(); // Listen on default port 9001
-        osc.Listen(9042); // Listen on custom port
-        osc.Listen(9001, 1024); // Use custom port and custom buffer length
+        osc.Listen(IPAddress.Parse("127.0.0.1")); // Listen on default port 9001 and local host
+        osc.Listen(null, 9042); // Listen on custom port
+        osc.Listen(null, 9001, 1024); // Use custom port and custom buffer length
         
+        
+        osc.Listen(IPAddress.Parse("127.0.0.1")); // Listen on default port 9001 and on user defined ipaddress
+        osc.Listen(IPAddress.Parse("127.0.0.1"), 9042); // Listen on port a custom port and on user defined ipaddress
 
         // Subscribe to incoming messages
         osc.OnMessage += OnMessageReceived;
+        Console.WriteLine($"OSC Initialized:\n                         Remote: {osc.RemoteEndPoint}\n                         Local: {osc.LocalEndPoint}");
 
+        
+        // bulk add methods on parmeter recieved
+        osc.TryAddMethod("helloworld", HelloWorldParameter);
+        
         Console.ReadKey(true); // :P
     }
 
@@ -96,6 +105,38 @@ internal class Program
         // Message type (Unknown|DefaultParameter|AvatarParameter|AvatarChange)
         VRCMessage.MessageType messageType = message.Type;
 
+        switch (messageType)
+        {
+            // shortened address to just be the parameter, example "MuteSelf" 
+            case VRCMessage.MessageType.AvatarParameter:
+                switch (message.AvatarParameter)
+                {
+                    case "myboolean":
+                        if (message.GetValue() is bool boolean)
+                        {
+                            if (boolean)
+                            {
+                                Console.WriteLine($"boolean state is {boolean}.");
+                                
+                                // invert state after 5 seconds
+                                Thread.Sleep(5000);
+                                osc.SendInput(VRCButton.Voice, !boolean);
+                                Console.WriteLine($"boolean state is now inverted.");
+                            }
+                        }
+                        break;
+                    
+                    default: 
+                        message.Print(); 
+                        break;
+                }
+                break;
+            
+            case VRCMessage.MessageType.AvatarChange:
+                if (message.GetValue() is string s) Console.WriteLine($"Avatar Changed to {s}");
+                break;
+        }
+
         // Retrieve the first value object contained in this message
         object? value = message.GetValue(); // Can return default
         float val = message.GetValue<float>(); // Alternative with generic type
@@ -105,6 +146,18 @@ internal class Program
 
         // Print this message with fancy colors for debugging
         message.Print();
+    }
+    
+    static void HelloWorldParameter(VRCMessage msg)
+    {
+        try
+        {
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Exception occured");
+        }
     }
 }
 ```

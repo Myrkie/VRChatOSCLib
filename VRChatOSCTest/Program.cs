@@ -46,7 +46,7 @@ internal class Program
 
 
         // Listen for incoming messages
-        osc.Listen(); // Listen on default port 9001 and local host
+        osc.Listen(IPAddress.Parse("127.0.0.1")); // Listen on default port 9001 and local host
         osc.Listen(null, 9042); // Listen on custom port
         osc.Listen(null, 9001, 1024); // Use custom port and custom buffer length
         
@@ -59,7 +59,7 @@ internal class Program
         Console.WriteLine($"OSC Initialized:\n                         Remote: {osc.RemoteEndPoint}\n                         Local: {osc.LocalEndPoint}");
 
         
-        // bulk add methods on parmeter recieved
+        // bulk add methods on parameter recieved
         osc.TryAddMethod("helloworld", HelloWorldParameter);
         
         Console.ReadKey(true); // :P
@@ -77,7 +77,7 @@ internal class Program
 
         // Message type (Unknown|DefaultParameter|AvatarParameter|AvatarChange)
         VRCMessage.MessageType messageType = message.Type;
-        
+
         switch (messageType)
         {
             // shortened address to just be the parameter, example "MuteSelf" 
@@ -123,23 +123,18 @@ internal class Program
     
     static void HelloWorldParameter(VRCMessage msg)
     {
-        try
+        // since this event is only triggered when the specified parameter is triggered, we don't need to case switch it.
+        if (msg.GetValue() is bool boolean)
         {
-            if (msg.GetValue() is bool boolean)
+            if (boolean)
             {
-                if (boolean)
-                {
-                    Console.WriteLine($"helloworld boolean state is {boolean}.");
+                Console.WriteLine($"boolean state is {boolean}.");
                                 
-                    // invert state after 5 seconds
-                    Thread.Sleep(5000);
-                    osc.SendInput(VRCButton.Voice, !boolean);
-                }
+                // invert state after 5 seconds
+                Thread.Sleep(5000);
+                osc.SendInput(VRCButton.Voice, !boolean);
+                Console.WriteLine($"boolean state is now inverted.");
             }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Exception occured");
         }
     }
 }
